@@ -40,6 +40,11 @@ let UsersService = class UsersService {
             where: { id },
         });
     }
+    async updatePassword(userId, newPasswordHash) {
+        await this.userRepository.update(userId, {
+            passwordHash: newPasswordHash,
+        });
+    }
 };
 UsersService = __decorate([
     Injectable(),

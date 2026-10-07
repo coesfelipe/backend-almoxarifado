@@ -6,4 +6,5 @@ export declare class UsersService {
     create(username: string, email: string, passwordPlain: string): Promise<User>;
     findOne(email: string): Promise<User | null>;
     findById(id: number): Promise<User | null>;
+    updatePassword(userId: number, newPasswordHash: string): Promise<void>;
 }

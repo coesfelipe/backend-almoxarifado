@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service.js';
 import * as bcrypt from 'bcrypt';
@@ -48,4 +48,31 @@ export class AuthService {
     email: user.email,
   };
 }
+
+  async changePassword(userId: number, currentPasswordPlain: string, newPasswordPlain: string) {
+      // 1. Busca o usuário pelo ID
+      const user = await this.usersService.findById(userId);
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado');
+      }
+
+      // 2. Valida se a senha atual está correta comparando com o passwordHash do banco
+      const isPasswordValid = await bcrypt.compare(currentPasswordPlain, user.passwordHash);
+      if (!isPasswordValid) {
+        throw new BadRequestException('A senha atual está incorreta');
+      }
+
+      // 3. Valida se a nova senha não é idêntica à atual
+      if (currentPasswordPlain === newPasswordPlain) {
+        throw new BadRequestException('A nova senha não pode ser igual à senha atual');
+      }
+
+      // 4. Criptografa a nova senha com bcrypt
+      const newPasswordHash = await bcrypt.hash(newPasswordPlain, 10);
+
+      // 5. Atualiza a senha através do UsersService
+      await this.usersService.updatePassword(userId, newPasswordHash);
+
+      return { message: 'Senha alterada com sucesso' };
+    }
 }

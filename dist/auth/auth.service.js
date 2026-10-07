@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service.js';
 import * as bcrypt from 'bcrypt';
@@ -50,6 +50,22 @@ let AuthService = class AuthService {
             username: user.name,
             email: user.email,
         };
+    }
+    async changePassword(userId, currentPasswordPlain, newPasswordPlain) {
+        const user = await this.usersService.findById(userId);
+        if (!user) {
+            throw new UnauthorizedException('Usuário não encontrado');
+        }
+        const isPasswordValid = await bcrypt.compare(currentPasswordPlain, user.passwordHash);
+        if (!isPasswordValid) {
+            throw new BadRequestException('A senha atual está incorreta');
+        }
+        if (currentPasswordPlain === newPasswordPlain) {
+            throw new BadRequestException('A nova senha não pode ser igual à senha atual');
+        }
+        const newPasswordHash = await bcrypt.hash(newPasswordPlain, 10);
+        await this.usersService.updatePassword(userId, newPasswordHash);
+        return { message: 'Senha alterada com sucesso' };
     }
 };
 AuthService = __decorate([
